@@ -1,5 +1,5 @@
 from peewee import *
-BOT_TOKEN = '1404329708:AAGRjyjMGgXqfV-oq5rkhCCwdd6cDHIheuo'
+BOT_TOKEN = '1531073094:AAEfPju00sRHqV40sdjFCBDXEh5PAIpy-Hs'
 
 
 con = PostgresqlDatabase(

@@ -14,3 +14,6 @@ class States(StatesGroup):
     offender: State = State()
     position: State = State()
     photo: State = State()
+    vote: State = State()
+    area: State = State()
+    station: State = State()
