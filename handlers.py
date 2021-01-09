@@ -12,7 +12,7 @@ from next_steps import States
 from models.user_model import is_registered, add_user, get_lang, update_lang, is_have_phone, update_phone
 from lang_phrases import lang_list
 from models.violation_model import add_viol
-
+from bot_logger import logger
 
 @dp.message_handler(commands=['start'])
 async def welcome(message: Message, state=FSMContext):
@@ -73,25 +73,31 @@ async def registration_step(message: Message, state=FSMContext):
 
 @dp.message_handler(content_types=['contact'])
 async def phone_save(message: Message, state=FSMContext):
-    lang = await get_lang(message.chat.id)
-    await update_phone(message.contact.user_id, message.contact.phone_number, message.contact.first_name)
-    await state.finish()
-    await main_menu(message, lang)
+    try:
+        lang = await get_lang(message.chat.id)
+        await update_phone(message.contact.user_id, message.contact.phone_number, message.contact.first_name)
+        await state.finish()
+        await main_menu(message, lang)
+    except Exception as e:
+        logger.error(e)
 
 
 @dp.message_handler(state=States.station)
 async def station_set(message: Message, state=FSMContext):
-    lang = await get_lang(message.chat.id)
-    if message.text == 'Назад':
-        await state.finish()
-        await main_menu(message, lang)
-    else:
-        data = await state.get_data()
-        district_id = data.get('district_id')
-        await add_poll(message.chat.id, district_id, message.text)
-        await send_message(message.chat.id, lang_list(lang, 'ty_for_choose'))
-        await state.finish()
-        await main_menu(message, lang)
+    try:
+        lang = await get_lang(message.chat.id)
+        if message.text == 'Назад':
+            await state.finish()
+            await main_menu(message, lang)
+        else:
+            data = await state.get_data()
+            district_id = data.get('district_id')
+            await add_poll(message.chat.id, district_id, message.text)
+            await send_message(message.chat.id, lang_list(lang, 'ty_for_choose'))
+            await state.finish()
+            await main_menu(message, lang)
+    except Exception as e:
+        logger.error(e)
 
 
 async def main_menu(message: Message, lang, state=FSMContext):
@@ -110,43 +116,45 @@ async def main_menu(message: Message, lang, state=FSMContext):
 
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
 async def commands(message: Message, state=FSMContext):
-    print(message.text)
-    lang = await get_lang(chat_id=message.chat.id)
-    if message.text == lang_list(lang, 'report_btn'):
-        await report_violation(message, lang)
-    if message.text == lang_list(lang, 'instruction_btn'):
-        await instruction(message, lang)
-    if message.text == lang_list(lang, 'switch_btn'):
-        if lang == 'ru':
-            lang = 'kz'
-        else:
-            lang = 'ru'
-        if await is_have_phone(message.chat.id):
-            await update_lang(message.chat.id, lang)
-            await main_menu(message, lang)
-        else:
-            await update_lang(message.chat.id, lang)
-            markup = await reg_buttons(lang)
-            await send_message(message.chat.id, lang_list(lang, 'start'), reply_markup=markup)
-    if message.text == lang_list(lang, 'verification_btn'):
-        await send_message(message.chat.id, 'verification')
-    if message.text == lang_list(lang, 'vote_btn'):
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(lang_list(lang, 'back_btn'))
-        await state.update_data(lang=lang)
-        await send_message(message.chat.id, lang_list(lang, 'voted_photo'), reply_markup=markup)
-        await States.vote.set()
-    if message.text == lang_list(lang, 'area_btn'):
-        await choose_area(message, lang)
+    try:
 
-    if message.text == '>>' or message.text == '<<' or message.text == 'Назад':
-        await slider(message, state, lang)
+        print(message.text)
+        lang = await get_lang(chat_id=message.chat.id)
+        if message.text == lang_list(lang, 'report_btn'):
+            await report_violation(message, lang)
+        if message.text == lang_list(lang, 'instruction_btn'):
+            await instruction(message, lang)
+        if message.text == lang_list(lang, 'switch_btn'):
+            if lang == 'ru':
+                lang = 'kz'
+            else:
+                lang = 'ru'
+            if await is_have_phone(message.chat.id):
+                await update_lang(message.chat.id, lang)
+                await main_menu(message, lang)
+            else:
+                await update_lang(message.chat.id, lang)
+                markup = await reg_buttons(lang)
+                await send_message(message.chat.id, lang_list(lang, 'start'), reply_markup=markup)
+        if message.text == lang_list(lang, 'verification_btn'):
+            await send_message(message.chat.id, 'verification')
+        if message.text == lang_list(lang, 'vote_btn'):
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add(lang_list(lang, 'back_btn'))
+            await state.update_data(lang=lang)
+            await send_message(message.chat.id, lang_list(lang, 'voted_photo'), reply_markup=markup)
+            await States.vote.set()
+        if message.text == lang_list(lang, 'area_btn'):
+            await choose_area(message, lang)
+        if message.text == '>>' or message.text == '<<' or message.text == 'Назад':
+            await slider(message, state, lang)
+    except Exception as e:
+        logger.error(e)
 
 
 async def slider(message, state, lang):
     data = await state.get_data()
     msg_ids = data.get('msg_ids')
-    print(msg_ids)
     query = data.get('query')
     amount = data.get('amount')
     list_of_msg = []
@@ -156,7 +164,6 @@ async def slider(message, state, lang):
             await bot.delete_message(message.chat.id, i)
 
         await bot.delete_message(message.chat.id, message.message_id)
-        print(amount)
         amount_of_slides = math.ceil(len(list_of_st) / 9)
         from_ = 9
         to_ = 18
@@ -176,8 +183,6 @@ async def slider(message, state, lang):
         else:
             to_ = amount * 9
             from_ = to_ - 9
-            print(from_)
-            print(to_)
             await state.update_data(amount=int(from_ / 9))
             markup = await markup_stations()
             for i in range(from_, to_):
@@ -196,29 +201,30 @@ async def slider(message, state, lang):
 
 @dp.message_handler(content_types=['photo', 'text'], state=States.vote)
 async def vote(message: Message, state=FSMContext):
-    data = await state.get_data()
-    lang = data.get('lang')
-    number = data.get('number')
-    print(data)
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    elif message.photo:
-        print(number)
-        if number is None:
-            await add_photo(message.chat.id, message.photo[1].file_id, 1)
-            await state.update_data(number=2)
-            await States.vote.set()
-        elif number == 2:
-            await add_photo(message.chat.id, message.photo[1].file_id, 2)
+    try:
+        data = await state.get_data()
+        lang = data.get('lang')
+        number = data.get('number')
+        if message.text == lang_list(lang, 'back_btn'):
             await state.finish()
-            await send_message(message.chat.id, lang_list(lang, 'ty_for_vote'))
             await main_menu(message, lang)
-    else:
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(lang_list(lang, 'back_btn'))
-        await send_message(message.chat.id, lang_list(lang, 'voted_photo'), reply_markup=markup)
-        await States.vote.set()
+        elif message.photo:
+            if number is None:
+                await add_photo(message.chat.id, message.photo[1].file_id, 1)
+                await state.update_data(number=2)
+                await States.vote.set()
+            elif number == 2:
+                await add_photo(message.chat.id, message.photo[1].file_id, 2)
+                await state.finish()
+                await send_message(message.chat.id, lang_list(lang, 'ty_for_vote'))
+                await main_menu(message, lang)
+        else:
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add(lang_list(lang, 'back_btn'))
+            await send_message(message.chat.id, lang_list(lang, 'voted_photo'), reply_markup=markup)
+            await States.vote.set()
+    except Exception as e:
+        logger.error(e)
 
 
 async def report_violation(message: Message, lang, state=FSMContext):
@@ -237,127 +243,152 @@ async def violation_markup(lang):
 
 @dp.message_handler(state=States.date, content_types=['text'])
 async def violation_date(message: Message, state=FSMContext):
-    date = message.text
-    lang = await get_lang(message.chat.id)
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    else:
-        if message.text == lang_list(lang, 'skip'):
-            date = None
-        await state.update_data(lang=lang)
-        await state.update_data(date=date)
-        markup = await violation_markup(lang)
-        await send_message(message.chat.id, lang_list(lang, 'violation_city'), markup)
-        await States.city.set()
+    try:
+        date = message.text
+        lang = await get_lang(message.chat.id)
+        if message.text == lang_list(lang, 'back_btn'):
+            await state.finish()
+            await main_menu(message, lang)
+        else:
+            if message.text == lang_list(lang, 'skip'):
+                date = None
+            await state.update_data(lang=lang)
+            await state.update_data(date=date)
+            markup = await violation_markup(lang)
+            await send_message(message.chat.id, lang_list(lang, 'violation_city'), markup)
+            await States.city.set()
+    except Exception as e:
+        logger.error(e)
 
 
 @dp.message_handler(state=States.city, content_types=['text'])
 async def violation_city(message: Message, state=FSMContext):
-    city = message.text
-    data = await state.get_data()
-    lang = data.get('lang')
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    else:
-        if message.text == lang_list(lang, 'skip'):
-            city = None
-        await state.update_data(city=city)
-        markup = await violation_markup(lang)
-        await send_message(message.chat.id, lang_list(lang, 'violation_name_victim'), markup)
-        await States.name.set()
+    try:
+        city = message.text
+        data = await state.get_data()
+        lang = data.get('lang')
+        if message.text == lang_list(lang, 'back_btn'):
+            await state.finish()
+            await main_menu(message, lang)
+        else:
+            if message.text == lang_list(lang, 'skip'):
+                city = None
+            await state.update_data(city=city)
+            markup = await violation_markup(lang)
+            await send_message(message.chat.id, lang_list(lang, 'violation_name_victim'), markup)
+            await States.name.set()
+    except Exception as e:
+        logger.error(e)
 
 
 @dp.message_handler(state=States.name, content_types=['text'])
 async def violation_name(message: Message, state=FSMContext):
-    name = message.text
-    data = await state.get_data()
-    lang = data.get('lang')
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    else:
-        if message.text == lang_list(lang, 'skip'):
-            name = None
-        await state.update_data(name=name)
-        markup = await violation_markup(lang)
-        await send_message(message.chat.id, lang_list(lang, 'violation_about'), markup)
-        await States.info.set()
+    try:
+        name = message.text
+        data = await state.get_data()
+        lang = data.get('lang')
+        if message.text == lang_list(lang, 'back_btn'):
+            await state.finish()
+            await main_menu(message, lang)
+        else:
+            if message.text == lang_list(lang, 'skip'):
+                name = None
+            await state.update_data(name=name)
+            markup = await violation_markup(lang)
+            await send_message(message.chat.id, lang_list(lang, 'violation_about'), markup)
+            await States.info.set()
+    except Exception as e:
+        print(e)
+        logger.error(e)
 
 
 @dp.message_handler(state=States.info, content_types=['text'])
 async def violation_info(message: Message, state=FSMContext):
-    info = message.text
-    data = await state.get_data()
-    lang = data.get('lang')
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    else:
-        if message.text == lang_list(lang, 'skip'):
-            info = None
-        await state.update_data(info=info)
-        markup = await violation_markup(lang)
-        await send_message(message.chat.id, lang_list(lang, 'violation_name_offender'), markup)
-        await States.offender.set()
+    try:
+
+        info = message.text
+        data = await state.get_data()
+        lang = data.get('lang')
+        if message.text == lang_list(lang, 'back_btn'):
+            await state.finish()
+            await main_menu(message, lang)
+        else:
+            if message.text == lang_list(lang, 'skip'):
+                info = None
+            await state.update_data(info=info)
+            markup = await violation_markup(lang)
+            await send_message(message.chat.id, lang_list(lang, 'violation_name_offender'), markup)
+            await States.offender.set()
+    except Exception as e:
+        logger.error(e)
 
 
 @dp.message_handler(state=States.offender, content_types=['text'])
 async def violation_offender(message: Message, state=FSMContext):
-    offender = message.text
-    data = await state.get_data()
-    lang = data.get('lang')
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    else:
-        if message.text == lang_list(lang, 'skip'):
-            offender = None
-        await state.update_data(offender=offender)
-        markup = await violation_markup(lang)
-        await send_message(message.chat.id, lang_list(lang, 'violation_position'), markup)
-        await States.position.set()
+    try:
+        offender = message.text
+        data = await state.get_data()
+        lang = data.get('lang')
+        if message.text == lang_list(lang, 'back_btn'):
+            await state.finish()
+            await main_menu(message, lang)
+        else:
+            if message.text == lang_list(lang, 'skip'):
+                offender = None
+            await state.update_data(offender=offender)
+            markup = await violation_markup(lang)
+            await send_message(message.chat.id, lang_list(lang, 'violation_position'), markup)
+            await States.position.set()
+    except Exception as e:
+        logger.error(e)
 
 
 @dp.message_handler(state=States.position, content_types=['text'])
 async def violation_position(message: Message, state=FSMContext):
-    position = message.text
-    data = await state.get_data()
-    lang = data.get('lang')
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    else:
-        if message.text == lang_list(lang, 'skip'):
-            position = None
-        await state.update_data(position=position)
-        markup = await violation_markup(lang)
-        await send_message(message.chat.id, lang_list(lang, 'violation_photo'), markup)
-        await States.photo.set()
+    try:
+        position = message.text
+        data = await state.get_data()
+        lang = data.get('lang')
+        if message.text == lang_list(lang, 'back_btn'):
+            await state.finish()
+            await main_menu(message, lang)
+        else:
+            if message.text == lang_list(lang, 'skip'):
+                position = None
+            await state.update_data(position=position)
+            markup = await violation_markup(lang)
+            await send_message(message.chat.id, lang_list(lang, 'violation_photo'), markup)
+            await States.photo.set()
+    except Exception as e:
+        print(e)
+        logger.error(e)
 
 
 @dp.message_handler(state=States.photo, content_types=['photo', 'video', 'text'])
 async def violation_photo(message: Message, state=FSMContext):
-    data = await state.get_data()
-    lang = data.get('lang')
-    photo = None
-    if message.text == lang_list(lang, 'back_btn'):
-        await state.finish()
-        await main_menu(message, lang)
-    elif message.text == lang_list(lang, 'skip') or not message.text:
-        if message.photo:
-            photo = message.photo[1].file_id
-        if message.video:
-            photo = message.video.file_id
-        await add_viol(data.get('date'), data.get('city'), data.get('name'), data.get('info'), data.get('offender'),
-                       data.get('position'), photo, message.chat.id)
-        await send_message(message.chat.id, lang_list(lang, 'violation_completed'))
-        await main_menu(message, lang)
-        await state.finish()
-    else:
-        await send_message(message.chat.id, lang_list(lang, 'violation_photo'))
-        await States.photo.set()
+    try:
+        data = await state.get_data()
+        lang = data.get('lang')
+        photo = None
+        if message.text == lang_list(lang, 'back_btn'):
+            await state.finish()
+            await main_menu(message, lang)
+        elif message.text == lang_list(lang, 'skip') or not message.text:
+            if message.photo:
+                photo = message.photo[1].file_id
+            if message.video:
+                photo = message.video.file_id
+            await add_viol(data.get('date'), data.get('city'), data.get('name'), data.get('info'), data.get('offender'),
+                           data.get('position'), photo, message.chat.id)
+            await send_message(message.chat.id, lang_list(lang, 'violation_completed'))
+            await main_menu(message, lang)
+            await state.finish()
+        else:
+            await send_message(message.chat.id, lang_list(lang, 'violation_photo'))
+            await States.photo.set()
+    except Exception as e:
+        print(e)
+        logger.error(e)
 
 
 async def instruction(message: Message, lang):

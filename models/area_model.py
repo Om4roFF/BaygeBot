@@ -1,5 +1,6 @@
 from config import BaseModel
 from peewee import *
+from bot_logger import logger
 
 
 class Area(BaseModel):
@@ -11,16 +12,20 @@ class Area(BaseModel):
 
 
 async def select_all():
-    areas = Area.select()
-    list_of_area = list()
-    for i in areas:
-        l = []
-        l.append(i.id)
-        l.append(i.name)
-        list_of_area.append(l)
-    return list_of_area
+    try:
+        areas = Area.select()
+        list_of_area = list()
+        for i in areas:
+            l = [i.id, i.name]
+            list_of_area.append(l)
+        return list_of_area
+    except Exception as e:
+        logger.error(e)
 
 
 async def get_area_by_id(area_name):
-    area = Area.select().where(Area.name == area_name).get()
-    return area.id
+    try:
+        area = Area.select().where(Area.name == area_name).get()
+        return area.id
+    except Exception as e:
+        logger.error(e)

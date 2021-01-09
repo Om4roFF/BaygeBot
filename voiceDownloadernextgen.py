@@ -1,12 +1,9 @@
-import os
 import time
 import telebot
-import datetime
 import requests
-from config import con, BOT_TOKEN
+from config import BOT_TOKEN
 import schedule
 from models.poll_model import list_of_poll_by_status
-
 
 
 # Определение ботов ботов

@@ -1,5 +1,6 @@
 from peewee import *
 from config import BaseModel
+from bot_logger import logger
 
 
 class Poll(BaseModel):
@@ -24,6 +25,7 @@ async def add_poll(chat_id, district_id, station):
         poll = Poll.create(chat_id=chat_id, district_id=district_id, station=station)
         poll.save()
         print(e)
+        logger.error(e)
 
 
 async def add_photo(chat_id, photo, number):
@@ -38,6 +40,7 @@ async def add_photo(chat_id, photo, number):
         poll = Poll.create(chat_id=chat_id)
         poll.save()
         print(e)
+        logger.error(e)
 
 
 def list_of_poll_by_status():
@@ -46,6 +49,7 @@ def list_of_poll_by_status():
         return poll
     except Exception as e:
         print(e)
+        logger.error(e)
 
 
 

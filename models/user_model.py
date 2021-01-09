@@ -1,5 +1,6 @@
 from config import BaseModel
 from peewee import *
+from bot_logger import logger
 
 
 class Users(BaseModel):
@@ -22,6 +23,7 @@ async def add_user(chat_id, lang, phone_number=None):
             user.save()
     except Exception as error:
         print(error)
+        logger.error(error)
 
 
 async def update_phone(chat_id, phone_number, name):
@@ -32,6 +34,7 @@ async def update_phone(chat_id, phone_number, name):
         user.save()
     except Exception as e:
         print(e)
+        logger.error(e)
 
 
 async def is_registered(chat_id):
@@ -48,7 +51,7 @@ async def is_have_phone(chat_id):
         if user.phone_number is not None:
             return True
         return False
-    except Exception as e:
+    except:
         return False
 
 
@@ -58,6 +61,7 @@ async def get_lang(chat_id):
         return user.lang
     except Exception as e:
         print(e)
+        logger.error(e)
 
 
 async def update_lang(chat_id, lang):
@@ -67,6 +71,7 @@ async def update_lang(chat_id, lang):
         user.save()
     except Exception as e:
         print(e)
+        logger.error(e)
 
 
 # is_registered(877012379)

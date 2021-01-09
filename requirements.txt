@@ -1,0 +1,6 @@
+peewee~=3.14.0
+aiogram~=2.11.2
+pip~=20.3.3
+requests~=2.25.1
+schedule~=0.6.0
+pyTelegramBotApi~=3.7.5

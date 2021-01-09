@@ -1,14 +1,11 @@
-import math
 import re
 
 from aiogram.dispatcher import FSMContext
-from aiogram.types import Message, ContentType
 from aiogram import types
 from lang_phrases import lang_list
 from main import dp, bot
 from models.area_model import select_all
 from models.district_model import list_of_district, select_all_district
-from models.polling_station_model import list_of_stations
 from models.user_model import get_lang
 from next_steps import States
 
@@ -33,15 +30,6 @@ async def markup_cities_page2():
 
 async def markup_district(district):
     markup = types.InlineKeyboardMarkup()
-    # if len(district) > 9:
-    #     print('here')
-    #     amount_of_slides = math.ceil(len(district)/9)
-    #     for i in range(8):
-    #         markup.add(types.InlineKeyboardButton(text=district[i][1], callback_data=district[i][1]))
-    #     markup.add(types.InlineKeyboardButton(text='>>', callback_data=f'>>_{city}'))
-    #     markup.add(types.InlineKeyboardButton(text='Назад', callback_data='back_'))
-    #     return markup
-    # else:
     for i in district:
         text = re.sub(r'\([^()]*\)', '', i[1])
         markup.add(types.InlineKeyboardButton(text=i[1], callback_data=text))
@@ -53,7 +41,6 @@ async def markup_district(district):
 async def markup_stations():
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton('Выбрать', callback_data='choose'))
-    # markup.add(types.InlineKeyboardButton(text='Назад', callback_data='back_'))
     return markup
 
 
@@ -159,5 +146,3 @@ async def choose_area(message: types.Message, lang):
     markup = await markup_cities_page1()
     await bot.send_message(chat_id=message.chat.id, text=lang_list(lang, 'area'),
                            reply_markup=markup, parse_mode=types.ParseMode.HTML)
-    # await bot.edit_message_text(text=lang_list(lang, 'area'))
-    # await message.answer(, reply_markup=)

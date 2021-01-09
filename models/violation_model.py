@@ -1,5 +1,6 @@
 from config import BaseModel
 from peewee import *
+from bot_logger import logger
 
 
 class Violation(BaseModel):
@@ -24,6 +25,7 @@ async def add_viol(date, city, name_victim, info, offender, position, photo, cha
                                position=position, photo=photo, chat_id=chat_id)
         vio.save()
     except Exception as e:
+        logger.error(e)
         print(e)
 
 
@@ -39,3 +41,4 @@ def list_of_violation_by_status():
 
     except Exception as e:
         print(e)
+        logger.error(e)
