@@ -100,6 +100,17 @@ async def station_set(message: Message, state=FSMContext):
         logger.error(e)
 
 
+@dp.message_handler(commands='stat')
+async def send_stat(message: Message, state=FSMContext):
+    try:
+
+
+    except Exception as e:
+        logger.error(e)
+
+
+
+
 async def main_menu(message: Message, lang, state=FSMContext):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=4)
     button1 = types.KeyboardButton(lang_list(lang, 'report_btn'))
