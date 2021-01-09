@@ -52,6 +52,11 @@ def list_of_poll_by_status():
         logger.error(e)
 
 
-
+async def list_of_user_poll():
+    try:
+        users = Poll.select().count()
+        return users
+    except Exception as e:
+        logger.error(e)
 
 

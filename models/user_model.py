@@ -60,7 +60,6 @@ async def get_lang(chat_id):
         user = Users.select().where(Users.id == int(chat_id)).get()
         return user.lang
     except Exception as e:
-        print(e)
         logger.error(e)
 
 
@@ -70,8 +69,26 @@ async def update_lang(chat_id, lang):
         user.lang = lang
         user.save()
     except Exception as e:
-        print(e)
         logger.error(e)
 
+
+async def list_of_user():
+    try:
+        users = Users.select().count()
+        return users
+    except Exception as e:
+        logger.error(e)
+
+
+async def count_of_reg_users():
+    try:
+        users = Users.select()
+        l = []
+        for i in users:
+            if i.phone_number is not None:
+                l.append(l)
+        return len(l)
+    except Exception as e:
+        logger.error(e)
 
 # is_registered(877012379)

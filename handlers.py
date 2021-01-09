@@ -6,10 +6,11 @@ from aiogram.types import Message
 
 from area_buttons import markup_cities_page1, choose_area, markup_stations
 from main import bot, dp
-from models.poll_model import add_poll, add_photo
+from models.poll_model import add_poll, add_photo, list_of_user_poll
 from models.polling_station_model import list_of_stations
 from next_steps import States
-from models.user_model import is_registered, add_user, get_lang, update_lang, is_have_phone, update_phone
+from models.user_model import is_registered, add_user, get_lang, update_lang, is_have_phone, update_phone, list_of_user, \
+    count_of_reg_users
 from lang_phrases import lang_list
 from models.violation_model import add_viol
 from bot_logger import logger
@@ -100,15 +101,18 @@ async def station_set(message: Message, state=FSMContext):
         logger.error(e)
 
 
-@dp.message_handler(commands='stat')
+@dp.message_handler(commands='stat', content_types=types.ContentTypes.TEXT)
 async def send_stat(message: Message, state=FSMContext):
+    print(message.text)
     try:
-
-
+        users_count = await list_of_user()
+        reg_count = await count_of_reg_users()
+        poll_count = await list_of_user_poll()
+        await message.answer('Общее количество пользователей: ' + str(users_count) + '\n\n'
+                             + 'Зарегистрированных пользователей: ' + str(reg_count) + '\n\n'
+                             + 'Количество избирателей: ' + str(poll_count))
     except Exception as e:
         logger.error(e)
-
-
 
 
 async def main_menu(message: Message, lang, state=FSMContext):
